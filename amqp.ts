@@ -1,7 +1,7 @@
 import * as amqp from 'amqplib';
 import {ServerException, ServerExceptionType} from './exceptions';
 import {AMQPExchange, AMQPHeader, AMQPMessage} from './interfaces';
-import Logger from '../sequencer/src/common/logger';
+import Logger from '@common/logger';
 import {EventEmitter} from 'stream';
 
 type ConsumerFctType = (body:object, header:object)=>[object, object]
@@ -260,8 +260,8 @@ export class AMQPServer {
   public publish(body:{[key:string]:string},
       headers:{[key:string]:string},
       topic:string|undefined) {
-    let _topic = null;
-    let _headers = null;
+    let _topic = undefined;
+    let _headers = undefined;
 
     if (topic) {
       _topic = topic;
