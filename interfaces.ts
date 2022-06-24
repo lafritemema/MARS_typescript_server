@@ -1,6 +1,5 @@
 import {MessagePropertyHeaders} from 'amqplib/properties';
-import {Configuration, ExceptionDescription, MessageBody} from '@common/interfaces';
-import { AMQPServer } from 'amqp';
+import {Configuration, ExceptionDescription} from '@common/interfaces';
 
 export interface ServerExceptionDescription extends ExceptionDescription {
   code:number

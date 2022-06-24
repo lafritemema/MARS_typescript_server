@@ -1,5 +1,5 @@
 import {ServerExceptionDescription} from './interfaces';
-import {BaseException} from '../common';
+import {BaseException} from '@common/exceptions';
 
 export enum ServerExceptionType {
   CONNECTION_ERROR = 'SERVER_CONNECTION_ERROR',
