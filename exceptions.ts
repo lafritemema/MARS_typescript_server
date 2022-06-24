@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {ServerExceptionDescription} from './interfaces';
 import {BaseException} from '@common/exceptions';
 
@@ -10,7 +11,7 @@ export enum ServerExceptionType {
  * class representing server error
  */
 export class ServerException extends BaseException {
-  private _errorCode:number
+  private _errorCode:number;
 
   /**
    * server exception constructor

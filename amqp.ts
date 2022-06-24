@@ -1,13 +1,12 @@
 import * as amqp from 'amqplib';
 import {ServerException, ServerExceptionType} from './exceptions';
 import {AMQPExchange,
-    AMQPHeader,
-    AMQPMessage,
-    AMQPQuery,
-    ConsumerPacket} from './interfaces';
+  AMQPHeader,
+  AMQPMessage,
+  AMQPQuery,
+  ConsumerPacket} from './interfaces';
 import Logger from '@common/logger';
 import {EventEmitter} from 'stream';
-import { cp } from 'fs';
 
 // type ConsumerFctType = (body:object, header:object)=>[object, object]
 
@@ -27,7 +26,8 @@ function browseConsumer(msgElement:ConsumerPacket,
  * @param {ConsumerFctType[]} consumers : consuming functions
  * @return {Function} : the pipeline function
  */
-export function pipeline(...consumers: Array<(cPacket:ConsumerPacket)=>ConsumerPacket>):Function {
+export function pipeline(...consumers: Array<(cPacket:ConsumerPacket)
+    =>ConsumerPacket>):Function {
   return (cPacket:ConsumerPacket) => {
     return consumers.reduce(browseConsumer, cPacket);
   };
@@ -143,11 +143,11 @@ class AMQPQueue {
  */
 export class AMQPServer {
   private _channel!:amqp.Channel;
-  private _queues:{[key:string]:AMQPQueue}
-  private _exchange:AMQPExchange
-  private _amqpUrl:string
-  private _name:string
-  private _logger:Logger
+  private _queues:{[key:string]:AMQPQueue};
+  private _exchange:AMQPExchange;
+  private _amqpUrl:string;
+  private _name:string;
+  private _logger:Logger;
 
   /**
    * AMQPServer constructor
@@ -220,26 +220,31 @@ export class AMQPServer {
         })
         .then(()=>{
           postman.on('newMessage', (message:AMQPMessage)=>{
-            //extract data from amqp message headers
-            const {publisher, path, report_topic, ..._headers} = message.headers;
+            // extract data from amqp message headers
+            const {publisher,
+              path,
+              // eslint-disable-next-line camelcase
+              report_topic,
+              ..._headers} = message.headers;
 
             // eslint-disable-next-line max-len
             this._logger.info(`Message received from publisher ${publisher} on topic ${message.topic}`);
 
             const queue = this._queues[message.consumer];
             const topic = queue.getTopic(message.topic);
-            
+
             const query:AMQPQuery = {
-              type:"amqp",
-              path : path ? path : undefined,
-              topic: report_topic ? report_topic : undefined
-            }
+              type: 'amqp',
+              path: path ? path : undefined,
+              // eslint-disable-next-line camelcase
+              topic: report_topic ? report_topic : undefined,
+            };
 
             const cPacket:ConsumerPacket = {
-              body:message.body,
+              body: message.body,
               headers: _headers,
-              query:query,
-            }
+              query: query,
+            };
 
             topic.consumers.forEach((fct:Function)=>{
               fct(cPacket);
@@ -248,7 +253,7 @@ export class AMQPServer {
         }).then(()=>{
           // log success server config
           this._logger.success('server configuration');
-          this._logger.info("server listening and waiting for new message")
+          this._logger.info('server listening and waiting for new message');
         })
         .catch((error:Error)=>{
           // logger.failure('Configure AMQP communications');
