@@ -1,18 +1,10 @@
 import {MessagePropertyHeaders} from 'amqplib/properties';
-import {Configuration} from 'src/common/interfaces';
-import {ExceptionDescription} from '../common';
+import {Configuration, ExceptionDescription, MessageBody} from '@common/interfaces';
+import { AMQPServer } from 'amqp';
 
 export interface ServerExceptionDescription extends ExceptionDescription {
   code:number
 }
-
-export interface AMQPHeader extends MessagePropertyHeaders {
-  // eslint-disable-next-line camelcase
-  report_topic?:string,
-  publisher:string,
-  path?:string
-}
-
 export interface AMQPExchange {
   name:string,
   type:string,
@@ -44,9 +36,40 @@ export interface HTTPConfiguration {
 }
 
 export interface AMQPMessage {
-  publisher:string,
-  body:object,
+  body:MessageBody,
   consumer:string,
-  header:MessagePropertyHeaders,
   topic:string
+  headers:AMQPHeader,
+}
+
+
+export interface MessageBody {
+  [key:string]:any
+}
+
+export interface MessageHeaders {
+  [key:string]:any
+}
+
+export interface MessageQuery {
+  type:'amqp'|'http',
+  path?:string,
+  [key:string]:any
+}
+
+export interface ConsumerPacket {
+  body:MessageBody,
+  headers:MessageHeaders,
+  query?: MessageQuery
+}
+
+export interface AMQPHeader extends MessagePropertyHeaders, MessageHeaders {
+  // eslint-disable-next-line camelcase
+  report_topic?:string,
+  path?:string,
+  publisher:string,
+}
+
+export interface AMQPQuery extends MessageQuery {
+  topic?:string
 }

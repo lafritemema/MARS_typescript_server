@@ -1,10 +1,15 @@
 import * as amqp from 'amqplib';
 import {ServerException, ServerExceptionType} from './exceptions';
-import {AMQPExchange, AMQPHeader, AMQPMessage} from './interfaces';
+import {AMQPExchange,
+    AMQPHeader,
+    AMQPMessage,
+    AMQPQuery,
+    ConsumerPacket} from './interfaces';
 import Logger from '@common/logger';
 import {EventEmitter} from 'stream';
+import { cp } from 'fs';
 
-type ConsumerFctType = (body:object, header:object)=>[object, object]
+// type ConsumerFctType = (body:object, header:object)=>[object, object]
 
 /**
  * function used by pipeline to browse throw consuming functions
@@ -12,10 +17,9 @@ type ConsumerFctType = (body:object, header:object)=>[object, object]
  * @param {Function} consumer : consumer function
  * @return {[object, object]} : tuple body, header after processing
  */
-function browseConsumer(msgElement:[object, object],
-    consumer:ConsumerFctType) {
-  const [body, header] = msgElement;
-  return consumer(body, header);
+function browseConsumer(msgElement:ConsumerPacket,
+    consumer:(cPacket:ConsumerPacket)=>ConsumerPacket) {
+  return consumer(msgElement);
 }
 
 /**
@@ -23,9 +27,9 @@ function browseConsumer(msgElement:[object, object],
  * @param {ConsumerFctType[]} consumers : consuming functions
  * @return {Function} : the pipeline function
  */
-export function pipeline(...consumers: Array<ConsumerFctType>):Function {
-  return (body:object, header:object) => {
-    return consumers.reduce(browseConsumer, [body, header]);
+export function pipeline(...consumers: Array<(cPacket:ConsumerPacket)=>ConsumerPacket>):Function {
+  return (cPacket:ConsumerPacket) => {
+    return consumers.reduce(browseConsumer, cPacket);
   };
 }
 
@@ -182,6 +186,7 @@ export class AMQPServer {
           // init this._channel
           this._channel = amqpChanel;
 
+          this._logger.try('server configuration');
           // assert the channel to service exchange
           this._channel.assertExchange(this._exchange.name,
               this._exchange.type, {
@@ -215,20 +220,35 @@ export class AMQPServer {
         })
         .then(()=>{
           postman.on('newMessage', (message:AMQPMessage)=>{
-            // eslint-disable-next-line max-len
-            this._logger.info(`Message received from publisher ${message.publisher} on topic ${message.topic}`);
+            //extract data from amqp message headers
+            const {publisher, path, report_topic, ..._headers} = message.headers;
 
-            // LOG
-            this._logger.debug(message.consumer);
-            this._logger.debug(Object.keys(this._queues).toString());
+            // eslint-disable-next-line max-len
+            this._logger.info(`Message received from publisher ${publisher} on topic ${message.topic}`);
 
             const queue = this._queues[message.consumer];
             const topic = queue.getTopic(message.topic);
+            
+            const query:AMQPQuery = {
+              type:"amqp",
+              path : path ? path : undefined,
+              topic: report_topic ? report_topic : undefined
+            }
+
+            const cPacket:ConsumerPacket = {
+              body:message.body,
+              headers: _headers,
+              query:query,
+            }
 
             topic.consumers.forEach((fct:Function)=>{
-              fct(message.body, message.header);
+              fct(cPacket);
             });
           });
+        }).then(()=>{
+          // log success server config
+          this._logger.success('server configuration');
+          this._logger.info("server listening and waiting for new message")
         })
         .catch((error:Error)=>{
           // logger.failure('Configure AMQP communications');
@@ -259,7 +279,7 @@ export class AMQPServer {
    */
   public publish(body:{[key:string]:string},
       headers:{[key:string]:string},
-      topic:string|undefined) {
+      topic?:string) {
     let _topic = undefined;
     let _headers = undefined;
 
@@ -301,16 +321,13 @@ function consumeMessage(message:amqp.ConsumeMessage|null) {
     const consumerTag = message.fields.consumerTag;
     const routingKey = message.fields.routingKey;
     const body = JSON.parse(message.content.toString());
-    const header = <AMQPHeader>message.properties.headers;
-
-    const {publisher, ..._header} = header;
+    const headers = <AMQPHeader>message.properties.headers;
 
     const amqpMessage:AMQPMessage = {
       consumer: consumerTag,
       topic: routingKey,
       body: body,
-      header: _header,
-      publisher: publisher,
+      headers: headers,
     };
 
     postman.emit('newMessage', amqpMessage);
