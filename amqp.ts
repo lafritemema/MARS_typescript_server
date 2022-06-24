@@ -280,8 +280,9 @@ export class AMQPServer {
    * function to publish a message on amqp service
    * @param {ConsumerPacket} cPacket : object describing the packets
    * passed to consumers
+   * @return {ConsumerPacket} : the consumer packet for following processing
    */
-  public publish(cPacket:ConsumerPacket) {
+  public publish(cPacket:ConsumerPacket):ConsumerPacket {
     const _body = Buffer.from(JSON.stringify(cPacket.body));
     const headers:AMQPHeader = {publisher: this._name,
       ...cPacket.headers};
@@ -304,6 +305,7 @@ export class AMQPServer {
       // eslint-disable-next-line max-len
       this._logger.error('publish function configured as consumer but no topic in defined');
     }
+    return cPacket;
   }
 }
 
