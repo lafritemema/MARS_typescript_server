@@ -57,9 +57,9 @@ export interface MessageQuery {
 }
 
 export interface ConsumerPacket {
-  body:MessageBody,
-  headers:MessageHeaders,
-  query?: MessageQuery
+  body: MessageBody,
+  headers: MessageHeaders,
+  query: MessageQuery
 }
 
 export interface AMQPHeader extends MessagePropertyHeaders, MessageHeaders {

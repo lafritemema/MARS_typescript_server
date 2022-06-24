@@ -278,42 +278,32 @@ export class AMQPServer {
 
   /**
    * function to publish a message on amqp service
-   * @param {object} body : message body
-   * @param {object} headers : message header
-   * @param {string} topic : topics to publish on
+   * @param {ConsumerPacket} cPacket : object describing the packets
+   * passed to consumers
    */
-  public publish(body:{[key:string]:string},
-      headers:{[key:string]:string},
-      topic?:string) {
-    let _topic = undefined;
-    let _headers = undefined;
+  public publish(cPacket:ConsumerPacket) {
+    const _body = Buffer.from(JSON.stringify(cPacket.body));
+    const headers:AMQPHeader = {publisher: this._name,
+      ...cPacket.headers};
+    const query = <AMQPQuery>cPacket.query;
 
-    if (topic) {
-      _topic = topic;
-      _headers = headers;
-    } else {
-      // eslint-disable-next-line camelcase
-      const {report_topic, ..._h} = headers;
-
-      // eslint-disable-next-line camelcase
-      _topic = report_topic;
-      _headers = _h;
-    }
-
-    _headers.publisher = this._name;
-
-    const _body = Buffer.from(JSON.stringify(body));
     const _properties = {
-      headers: _headers,
+      headers: headers,
       contentType: 'application/json',
     };
 
-    this._channel.publish(
-        this._exchange.name,
-        <string>_topic,
-        _body,
-        _properties,
-    );
+    if (query.topic) {
+      this._logger.info(`publish message on topic ${query.topic}`);
+      this._channel.publish(
+          this._exchange.name,
+          query.topic,
+          _body,
+          _properties,
+      );
+    } else {
+      // eslint-disable-next-line max-len
+      this._logger.error('publish function configured as consumer but no topic in defined');
+    }
   }
 }
 
