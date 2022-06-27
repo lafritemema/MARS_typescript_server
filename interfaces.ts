@@ -20,12 +20,7 @@ export interface AMQPConfiguration {
   type:string,
   host:string,
   port:number,
-  exchange:ExchangeConfiguration
-}
-
-export interface ExchangeConfiguration {
-  name:string,
-  type:string
+  exchange:AMQPExchange
 }
 
 export interface HTTPConfiguration {
@@ -53,6 +48,7 @@ export interface MessageHeaders {
 export interface MessageQuery {
   type:'amqp'|'http',
   path?:string,
+  topic?:string,
   [key:string]:any
 }
 
@@ -62,13 +58,16 @@ export interface ConsumerPacket {
   query: MessageQuery
 }
 
+export interface RequestDefinition {
+  path:string,
+  method:string,
+  query?:object,
+  body?:object,
+}
+
 export interface AMQPHeader extends MessagePropertyHeaders, MessageHeaders {
   // eslint-disable-next-line camelcase
   report_topic?:string,
   path?:string,
   publisher:string,
-}
-
-export interface AMQPQuery extends MessageQuery {
-  topic?:string
 }

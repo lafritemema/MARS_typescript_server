@@ -3,8 +3,8 @@ import {ServerException, ServerExceptionType} from './exceptions';
 import {AMQPExchange,
   AMQPHeader,
   AMQPMessage,
-  AMQPQuery,
-  ConsumerPacket} from './interfaces';
+  ConsumerPacket,
+  MessageQuery} from './interfaces';
 import Logger from '@common/logger';
 import {EventEmitter} from 'stream';
 
@@ -233,7 +233,7 @@ export class AMQPServer {
             const queue = this._queues[message.consumer];
             const topic = queue.getTopic(message.topic);
 
-            const query:AMQPQuery = {
+            const query:MessageQuery = {
               type: 'amqp',
               path: path ? path : undefined,
               // eslint-disable-next-line camelcase
