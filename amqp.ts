@@ -284,20 +284,26 @@ export class AMQPServer {
    */
   public publish(cPacket:ConsumerPacket):ConsumerPacket {
     const _body = Buffer.from(JSON.stringify(cPacket.body));
-    const headers:AMQPHeader = {publisher: this._name,
+    const {path, topic} = cPacket.query;
+
+    const headers:AMQPHeader = {
+      publisher: this._name,
       ...cPacket.headers};
-    const query = <AMQPQuery>cPacket.query;
+
+    if (path) {
+      headers.path = path;
+    }
 
     const _properties = {
       headers: headers,
       contentType: 'application/json',
     };
 
-    if (query.topic) {
-      this._logger.info(`publish message on topic ${query.topic}`);
+    if (topic) {
+      this._logger.info(`publish message on topic ${topic}`);
       this._channel.publish(
           this._exchange.name,
-          query.topic,
+          topic,
           _body,
           _properties,
       );
