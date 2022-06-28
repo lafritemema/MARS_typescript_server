@@ -10,8 +10,8 @@ export interface AMQPExchange {
 }
 
 export interface ServerConfiguration extends Configuration {
-  amqp:AMQPConfiguration|undefined,
-  http:object|undefined
+  amqp?:AMQPConfiguration,
+  http?:HTTPConfiguration
 }
 
 
