@@ -201,7 +201,8 @@ export class AMQPServer {
             // create queue
             amqpChanel.assertQueue('',
                 {exclusive: false,
-                  durable: false})
+                  durable: false,
+                  autoDelete: true})
                 .then((amqpQueue:amqp.Replies.AssertQueue) => {
                   // update the queue object id
                   queue.amqpId = amqpQueue.queue;
